@@ -1,8 +1,9 @@
 import duckdb
 from pathlib import Path
 import yaml
-
-with open("config/paths.yaml") as f:
+project_file_path = "/media/jeyanth-s/DevDrive/AI_Workspace/projects/Cognitives---Member-Risk-Stratification-and-Care-Management/pipeline"
+project_file_path = Path(project_file_path)
+with open(project_file_path / "config/paths.yaml") as f:
     paths = yaml.safe_load(f)
 
 DB_PATH = Path(paths["data_root"]) / "db" / "synpuf.duckdb"
@@ -42,11 +43,11 @@ SELECT b.DESYNPUF_ID,
        b.BENE_BIRTH_DT, b.BENE_SEX_IDENT_CD, b.BENE_RACE_CD,
        ca.part_a_claims, ca.part_a_spend,
        cb.part_b_claims, cb.part_b_spend
-FROM beneficiary b
+FROM beneficiary_all b
 LEFT JOIN carrier_part_a ca USING(DESYNPUF_ID)
 LEFT JOIN carrier_part_b cb USING(DESYNPUF_ID)
 """)
 
 # Export ML-ready Parquet
-conn.execute("COPY ml_features TO 'features/ml_features.parquet' (FORMAT PARQUET)")
+conn.execute("COPY ml_features TO '/media/jeyanth-s/DevDrive/AI_Workspace/projects/Cognitives---Member-Risk-Stratification-and-Care-Management/pipeline/features/ml_features.parquet' (FORMAT PARQUET)")
 conn.close()

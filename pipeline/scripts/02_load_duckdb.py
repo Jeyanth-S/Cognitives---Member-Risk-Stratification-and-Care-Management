@@ -2,10 +2,10 @@ import duckdb
 from pathlib import Path
 import yaml
 project_file_path = "/media/jeyanth-s/DevDrive/AI_Workspace/projects/Cognitives---Member-Risk-Stratification-and-Care-Management/pipeline"
+project_file_path = Path(project_file_path)
 # -------------------------
 # Load config paths
 # -------------------------
-project_file_path = Path(project_file_path)
 with open(project_file_path / "config/paths.yaml") as f:
     paths = yaml.safe_load(f)
 
