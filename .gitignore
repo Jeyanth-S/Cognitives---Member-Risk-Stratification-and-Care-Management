@@ -48,4 +48,4 @@ env/
 *.cache
 *.bak
 .venv/
-*.zip
+pipeline/raw.zip
