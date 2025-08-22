@@ -1,0 +1,24 @@
+# Root folder for the SynPUF pipeline
+data_root: "./pipeline"
+
+# Raw CSV location (under data_root/raw/)
+raw:
+  beneficiary: "raw/beneficiary"
+  inpatient: "raw/inpatient"
+  outpatient: "raw/outpatient"
+  carrier: "raw/carrier"
+  pde: "raw/pde"
+
+# Parquet storage (under data_root/parquet/)
+parquet:
+  beneficiary: "parquet/beneficiary"
+  inpatient: "parquet/inpatient"
+  outpatient: "parquet/outpatient"
+  carrier: "parquet/carrier"
+  pde: "parquet/pde"
+
+# DuckDB warehouse location
+duckdb: "db/synpuf.duckdb"
+
+# ML-ready features output
+features: "features/ml_features.parquet"

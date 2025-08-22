@@ -1,1 +1,49 @@
 OG data/
+# -----------------------------
+# Raw and processed data
+# -----------------------------
+/pipeline/raw/
+# Ignore all raw CSVs (Carrier, Beneficiary, PDE, Claims)
+*.csv
+
+/pipeline/parquet/
+# Ignore Parquet outputs; these are generated from CSVs
+*.parquet
+
+/pipeline/db/
+# Ignore DuckDB database file
+*.duckdb
+
+/pipeline/features/
+# Ignore ML-ready feature outputs
+*.parquet
+*.duckdb
+
+# -----------------------------
+# Logs
+# -----------------------------
+/pipeline/logs/
+*.log
+
+# -----------------------------
+# Python environment / IDE
+# -----------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env/
+venv/
+env/
+.ipynb_checkpoints/
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# -----------------------------
+# Temporary or cache files
+# -----------------------------
+*.tmp
+*.cache
+*.bak
