@@ -47,3 +47,4 @@ env/
 *.tmp
 *.cache
 *.bak
+.venv/
