@@ -1,0 +1,123 @@
+/* General */
+body {
+  font-family: 'Open Sans', Arial, sans-serif;
+  background: #f7fafc;
+  margin: 0;
+  color: #222;
+  line-height: 1.6;
+}
+
+/* Header */
+.main-header {
+  background: #216ba0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.logo img {
+  margin-right: 0.75rem;
+}
+nav a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 2rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+nav a:hover {
+  color: #b9e0fd;
+}
+
+/* Cards & Sections */
+.centered-card,
+.welcome {
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(33, 107, 160, 0.12);
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 3rem auto;
+  max-width: 500px;
+  text-align: center;
+}
+.welcome h1 {
+  margin-top: 1rem;
+}
+.button-row {
+  margin-top: 1rem;
+}
+
+/* Buttons */
+.main-btn, .page-btn {
+  background: #2c927d;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  margin: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(44, 146, 125, 0.2);
+  text-decoration: none;
+  display: inline-block;
+}
+.main-btn:hover, .page-btn:hover {
+  background: #247b67;
+}
+
+/* Table */
+.member-table {
+  width: 100%;
+  margin: 2rem 0;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  border-collapse: collapse;
+}
+.member-table th,
+.member-table td {
+  padding: 0.9rem 0.7rem;
+  text-align: center;
+  border: 1px solid #d3dee5;
+}
+.member-table th {
+  background: #f0f6fb;
+  font-weight: 600;
+}
+.avatar {
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+}
+
+/* Risk Tiers */
+.tier-low { color: #2c927d; font-weight: bold; }
+.tier-medium { color: #ff9800; font-weight: bold; }
+.tier-high { color: #e63946; font-weight: bold; }
+
+/* Footer */
+footer {
+  background: #e8f0fc;
+  color: #216ba0;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.8rem 0;
+  margin-top: 2rem;
+}
+
+/* Errors */
+.error-msg {
+  background-color: #fdd;
+  padding: 0.75rem;
+  border-radius: 6px;
+  color: #a00;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}

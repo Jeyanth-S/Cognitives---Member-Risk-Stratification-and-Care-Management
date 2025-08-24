@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Home - Member Risk Platform{% endblock %}
+{% block content %}
+<section class="welcome">
+  <img src="{{ url_for('static', filename='care_team.svg') }}" alt="Care Team" height="120" />
+  <h1>Welcome, Care Manager</h1>
+  <p>
+    This platform helps you identify and manage high-risk members through data-driven risk scores and tailored interventions.<br>
+    <em>Focus your care. Maximize outcomes. Lower costs.</em>
+  </p>
+  <div class="button-row">
+    <a class="main-btn" href="{{ url_for('member_data') }}">View Members</a>
+    <a class="main-btn" href="{{ url_for('predict') }}">Run Prediction</a>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Members - Member Risk Platform{% endblock %}
+{% block content %}
+<h2>Member List</h2>
+<table class="member-table">
+  <thead>
+    <tr>
+      <th>Profile</th>
+      <th>Member ID</th>
+      <th>Name</th>
+      <th>Risk Tier</th>
+      <th>Score (30/60/90d)</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for member in members %}
+    <tr>
+      <td><img src="{{ url_for('static', filename='avatars/' + member.avatar) }}" alt="Profile" class="avatar" /></td>
+      <td>{{ member.member_id }}</td>
+      <td>{{ member.name }}</td>
+      <td class="tier tier-{{ member.risk_tier | lower }}">{{ member.risk_tier }}</td>
+      <td>{{ member.risk_30 }}, {{ member.risk_60 }}, {{ member.risk_90 }}</td>
+      <td><a href="#">Details</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="pagination">
+  {% if page > 1 %}
+    <a class="page-btn" href="{{ url_for('member_data', page=page-1) }}">Previous</a>
+  {% endif %}
+  <span>Page {{ page }}</span>
+  {% if has_more %}
+    <a class="page-btn" href="{{ url_for('member_data', page=page+1) }}">Next</a>
+  {% endif %}
+</div>
+{% endblock %}
