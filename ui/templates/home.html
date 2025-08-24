@@ -1,17 +1,50 @@
 {% extends "base.html" %}
 {% block title %}Home - Member Risk Platform{% endblock %}
 {% block content %}
-<section class="welcome">
-  <img src="{{ url_for('static', filename='care_team.svg') }}" alt="Care Team" height="120" />
-  <h1>Welcome, Care Manager</h1>
-  <p>
-    This platform helps you identify and manage high-risk members through data-driven risk scores and tailored interventions.<br>
-    <em>Focus your care. Maximize outcomes. Lower costs.</em>
-  </p>
-  <div class="button-row">
-    <a class="main-btn" href="{{ url_for('members') }}">View Members</a>
 
+<!-- Hero Section -->
+<section class="welcome text-center py-8">
+  <img src="{{ url_for('static', filename='care_team.jpeg') }}" 
+       alt="Care Team" 
+       class="mx-auto rounded-xl shadow-md mb-6" 
+       height="160" />
+
+  <h1 class="text-4xl font-bold text-blue-800 mb-4">Member Risk Stratification & Care Management</h1>
+  <p class="text-lg text-gray-700 max-w-3xl mx-auto leading-relaxed">
+    A unified platform to help <strong>care managers</strong> identify, monitor, and act on 
+    <span class="text-blue-600 font-medium">high-risk members</span>.  
+    Our goal: <span class="font-semibold">better outcomes, proactive interventions, and reduced healthcare costs.</span>
+  </p>
+
+  <div class="button-row flex justify-center gap-6 mt-8">
+    <a class="main-btn" href="{{ url_for('members') }}">View Members</a>
     <a class="main-btn" href="{{ url_for('predict') }}">Run Prediction</a>
   </div>
 </section>
+
+<!-- Problem Statement -->
+<section class="problem bg-gray-50 py-10 px-6 rounded-2xl shadow-sm mt-12 max-w-5xl mx-auto">
+  <h2 class="text-2xl font-semibold text-blue-900 mb-4">Why Choose Our Platform?</h2>
+  <p class="text-gray-700 text-lg leading-relaxed">
+    <li><strong>Identify high-risk members</strong> before costly hospitalizations.</li>
+    <li><strong>Prioritize interventions</strong> with AI-driven risk scoring.</li>
+    <li><strong>Monitor progress</strong> and track impact over time.</li>
+    <li><strong>Reduce total healthcare spend</strong> with proactive care strategies.</li>
+  </p>
+</section>
+
+<!-- Objective -->
+
+
+<!-- Use Case Flow -->
+<section class="usecase bg-gray-50 py-10 px-6 rounded-2xl shadow-sm mt-12 max-w-5xl mx-auto">
+  <h2 class="text-2xl font-semibold text-blue-900 mb-4">How It Works</h2>
+  <ol class="list-decimal list-inside text-gray-700 text-lg space-y-2">
+    <li>Login to access your <strong>member population</strong>.</li>
+    <li>View <strong>risk scores</strong> for each member in real-time.</li>
+    <li>Take action on members who need <strong>immediate attention</strong>.</li>
+    <li>Track outcomes and demonstrate <strong>ROI in care management</strong>.</li>
+  </ol>
+</section>
+
 {% endblock %}
