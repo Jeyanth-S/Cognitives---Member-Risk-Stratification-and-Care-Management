@@ -36,22 +36,39 @@ nav a:hover {
   color: #b9e0fd;
 }
 
-/* Cards & Sections */
-.centered-card,
+/* Home Welcome Section */
 .welcome {
   background: #fff;
   box-shadow: 0 4px 20px rgba(33, 107, 160, 0.12);
-  border-radius: 12px;
-  padding: 2rem;
+  border-radius: 14px;
+  padding: 3rem 2rem;
   margin: 3rem auto;
-  max-width: 500px;
+  max-width: 900px;
   text-align: center;
 }
+.welcome img {
+  display: block;
+  margin: 0 auto 1rem auto;
+}
 .welcome h1 {
-  margin-top: 1rem;
+  margin: 1rem 0;
+  font-size: 2rem;
+  color: #216ba0;
+}
+.welcome p {
+  max-width: 700px;
+  margin: 0.5rem auto 1.5rem auto;
+  font-size: 1.1rem;
+  color: #444;
+}
+.welcome em {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: italic;
+  color: #2c927d;
 }
 .button-row {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 /* Buttons */
@@ -60,13 +77,14 @@ nav a:hover {
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 0.7rem 1.5rem;
-  font-size: 1rem;
+  padding: 0.9rem 2rem;
+  font-size: 1.05rem;
   margin: 0.5rem;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(44, 146, 125, 0.2);
   text-decoration: none;
   display: inline-block;
+  transition: background 0.2s;
 }
 .main-btn:hover, .page-btn:hover {
   background: #247b67;
@@ -110,6 +128,7 @@ footer {
   text-align: center;
   padding: 0.8rem 0;
   margin-top: 2rem;
+  border-top: 1px solid #cbd9f1;
 }
 
 /* Errors */
@@ -120,4 +139,126 @@ footer {
   color: #a00;
   margin-bottom: 1rem;
   font-weight: 500;
+}
+/* Make header full width */
+.site-header {
+  width: 100%;
+  background: #2c3e50;
+  color: #fff;
+  padding: 15px 0;
+  position: relative;
+}
+
+/* Flexbox to space logo and nav */
+.header-container {
+  width: 95%;              /* responsive width */
+  max-width: 1400px;       /* optional max size */
+  margin: 0 auto;          /* center contents */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo */
+.logo {
+  margin: 0;
+  font-size: 22px;
+}
+
+/* Navigation */
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 20px;
+  font-size: 16px;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+/* Ensure content stretches full width */
+.content {
+  width: 95%;
+  max-width: 1400px;
+  margin: 20px auto;
+}
+/* Content wrapper */
+.content {
+  width: 95%;
+  max-width: 1400px;
+  margin: 20px auto;
+}
+
+/* Page title */
+.page-title {
+  font-size: 1.8rem;
+  color: #216ba0;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+/* Table container with horizontal scroll */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 8px;
+}
+
+/* Member table */
+.member-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  min-width: 800px; /* ensures scroll on small screens */
+}
+
+.member-table th,
+.member-table td {
+  padding: 0.9rem 0.7rem;
+  text-align: center;
+  border: 1px solid #d3dee5;
+}
+
+.member-table th {
+  background: #f0f6fb;
+  font-weight: 600;
+}
+
+/* Pagination */
+.pagination {
+  text-align: center;
+  margin: 20px 0;
+}
+
+.pagination a {
+  margin: 0 5px;
+  padding: 6px 12px;
+  border: 1px solid #2c927d;
+  border-radius: 5px;
+  text-decoration: none;
+  color: #2c927d;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.pagination a.active {
+  background: #2c927d;
+  color: #fff;
+}
+
+.pagination a:hover {
+  background: #247b67;
+  color: #fff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .member-table th,
+  .member-table td {
+    padding: 0.7rem 0.5rem;
+    font-size: 13px;
+  }
 }
