@@ -1,39 +1,79 @@
 {% extends "base.html" %}
 {% block title %}Members - Member Risk Platform{% endblock %}
-{% block content %}
-<h2>Member List</h2>
-<table class="member-table">
-  <thead>
-    <tr>
-      <th>Profile</th>
-      <th>Member ID</th>
-      <th>Name</th>
-      <th>Risk Tier</th>
-      <th>Score (30/60/90d)</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for member in members %}
-    <tr>
-      <td><img src="{{ url_for('static', filename='avatars/' + member.avatar) }}" alt="Profile" class="avatar" /></td>
-      <td>{{ member.member_id }}</td>
-      <td>{{ member.name }}</td>
-      <td class="tier tier-{{ member.risk_tier | lower }}">{{ member.risk_tier }}</td>
-      <td>{{ member.risk_30 }}, {{ member.risk_60 }}, {{ member.risk_90 }}</td>
-      <td><a href="#">Details</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-<div class="pagination">
-  {% if page > 1 %}
-    <a class="page-btn" href="{{ url_for('member_data', page=page-1) }}">Previous</a>
-  {% endif %}
-  <span>Page {{ page }}</span>
-  {% if has_more %}
-    <a class="page-btn" href="{{ url_for('member_data', page=page+1) }}">Next</a>
-  {% endif %}
+{% block content %}
+<div class="content">
+
+  <h1 class="page-title">Member Data (Page {{ page }} of {{ total_pages }})</h1>
+
+  <!-- Search Box -->
+  <div class="search-container" style="text-align: right; margin-bottom: 10px;">
+    <input type="text" id="searchInput" placeholder="Search Bene ID..." class="form-control" style="max-width: 250px; display: inline-block;">
+  </div>
+
+  <!-- Table wrapper for scrolling -->
+  <div class="table-container">
+    <table class="member-table" id="memberTable">
+      <thead>
+        <tr>
+          {% for col in columns %}
+            <th>{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            {% for col in columns %}
+              <td>
+                {% if col in ["SP_ALZHDMTA","SP_CHF","SP_CHRNKIDN","SP_CNCR","SP_COPD",
+                               "SP_DEPRESSN","SP_DIABETES","SP_ISCHMCHT","SP_OSTEOPRS",
+                               "SP_RA_OA","SP_STRKETIA"] %}
+                  {% if row[col] == 1 %}Yes{% else %}No{% endif %}
+                {% else %}
+                  {{ row[col] }}
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    {% if page > 1 %}
+      <a href="{{ url_for('members', page=page-1) }}">Prev</a>
+    {% endif %}
+
+    <a class="active">{{ page }}</a>
+
+    {% if page < total_pages %}
+      <a href="{{ url_for('members', page=page+1) }}">Next</a>
+    {% endif %}
+  </div>
+
 </div>
+
+<!-- JavaScript for Search -->
+<script>
+  document.getElementById('searchInput').addEventListener('keyup', function() {
+    const filter = this.value.toUpperCase();
+    const table = document.getElementById('memberTable');
+    const trs = table.getElementsByTagName('tr');
+
+    for (let i = 1; i < trs.length; i++) { // skip header row
+      const td = trs[i].getElementsByTagName('td')[0]; // Bene ID in first column
+      if (td) {
+        const txtValue = td.textContent || td.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          trs[i].style.display = '';
+        } else {
+          trs[i].style.display = 'none';
+        }
+      }
+    }
+  });
+</script>
 {% endblock %}

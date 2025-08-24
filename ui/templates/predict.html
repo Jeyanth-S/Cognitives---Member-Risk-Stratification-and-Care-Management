@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Predict - Member Risk Platform{% endblock %}
+
+{% block content %}
+<div class="content">
+
+  <h1 class="page-title" style="text-align: center;">Member Prediction</h1>
+
+  <div class="predict-container" style="max-width: 500px; margin: 50px auto; text-align: center; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+
+    <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Are you a new user or an existing user?</p>
+
+    <!-- Existing User -->
+    <form method="POST" action="{{ url_for('predict_existing') }}" style="margin-bottom: 20px;">
+      <div class="mb-3">
+        <input type="text" name="bene_id" class="form-control" placeholder="Enter Bene ID" required>
+      </div>
+      <button type="submit" class="main-btn w-100">Existing User</button>
+    </form>
+
+    <hr style="margin: 1.5rem 0; border-color: #ddd;">
+
+    <!-- New User -->
+    <form method="GET" action="{{ url_for('predict_new') }}">
+      <button type="submit" class="main-btn w-100">New User</button>
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}
