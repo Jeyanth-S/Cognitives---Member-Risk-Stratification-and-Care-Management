@@ -6,12 +6,14 @@
 
   <h1 class="page-title" style="text-align: center;">Member Prediction</h1>
 
-  <div class="predict-container" style="max-width: 500px; margin: 50px auto; text-align: center; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+  <div class="predict-container" 
+       style="max-width: 700px; margin: 30px auto; text-align: center; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
 
+    <!-- Selection Section -->
     <p style="font-size: 1.1rem; margin-bottom: 1.5rem;">Are you a new user or an existing user?</p>
 
     <!-- Existing User -->
-    <form method="POST" action="{{ url_for('predict_existing') }}" style="margin-bottom: 20px;">
+    <form method="POST" action="{{ url_for('predict') }}" style="margin-bottom: 20px;">
       <div class="mb-3">
         <input type="text" name="bene_id" class="form-control" placeholder="Enter Bene ID" required>
       </div>
@@ -21,11 +23,42 @@
     <hr style="margin: 1.5rem 0; border-color: #ddd;">
 
     <!-- New User -->
-    <form method="GET" action="{{ url_for('predict_new') }}">
-      <button type="submit" class="main-btn w-100">New User</button>
-    </form>
+    
+
+    <!-- ================== Prediction Results ================== -->
+    {% if prediction %}
+      <div class="results" style="margin-top: 2rem; text-align: left;">
+        
+        {% if prediction.error %}
+          <div style="color: red; font-weight: bold; text-align: center;">
+            {{ prediction.error }}
+          </div>
+        {% else %}
+          <h3 style="text-align:center; margin-bottom: 1.2rem;">Predicted Risk Tiers</h3>
+          <div style="display: flex; justify-content: space-around; gap: 1rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 150px; background:#f5f8ff; padding:1rem; border-radius:10px; text-align:center;">
+              <h4>30 Days</h4>
+              <p style="font-size: 1.2rem; font-weight: bold;">{{ prediction["30d"] }}</p>
+            </div>
+            <div style="flex: 1; min-width: 150px; background:#f5f8ff; padding:1rem; border-radius:10px; text-align:center;">
+              <h4>60 Days</h4>
+              <p style="font-size: 1.2rem; font-weight: bold;">{{ prediction["60d"] }}</p>
+            </div>
+            <div style="flex: 1; min-width: 150px; background:#f5f5f5; padding:1rem; border-radius:10px; text-align:center;">
+              <h4>90 Days</h4>
+              <p style="font-size: 1.2rem; font-weight: bold;">{{ prediction["90d"] }}</p>
+            </div>
+          </div>
+
+          {% if shap_text %}
+          <div style="margin-top: 2rem; background:#fafafa; padding:1.5rem; border-left:4px solid #4a90e2; border-radius:6px;">
+            {{ shap_text | safe }}
+          </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
 
   </div>
-
 </div>
 {% endblock %}
