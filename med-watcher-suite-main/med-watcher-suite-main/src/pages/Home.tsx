@@ -87,11 +87,32 @@ const Home = () => {
             <h1 className="text-3xl font-bold text-primary-foreground">MedAnalytics</h1>
           </div>
           <nav className="hidden md:flex space-x-8">
-            <a href="#dashboard" className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium">Dashboard</a>
-            <a href="#patients" className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium">Patients</a>
-            <a href="#analytics" className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium">Analytics</a>
-            <a href="#contact" className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium">Contact</a>
-          </nav>
+  <button 
+    onClick={() => navigate("/dashboard")} 
+    className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium"
+  >
+    Dashboard
+  </button>
+  <button 
+    onClick={() => navigate("/patients")} 
+    className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium"
+  >
+    Patients
+  </button>
+  <button 
+    onClick={() => navigate("/analytics")} 
+    className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium"
+  >
+    Analytics
+  </button>
+  <button 
+    onClick={() => navigate("/contact")} 
+    className="text-primary-foreground hover:text-primary-glow transition-smooth hover:scale-110 font-medium"
+  >
+    Contact
+  </button>
+</nav>
+
         </div>
       </header>
 
@@ -278,81 +299,7 @@ const Home = () => {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="relative py-20 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <div className="inline-flex items-center justify-center p-3 bg-gradient-warning rounded-full mb-6 shadow-glow">
-              <Target className="w-8 h-8 text-warning-foreground" />
-            </div>
-            <h3 className="text-4xl font-bold mb-6 gradient-text">Contact Us</h3>
-            <p className="text-muted-foreground max-w-3xl mx-auto text-lg">
-              Get in touch with our team for support, demos, or partnership opportunities. We're here to help you succeed.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="card-hover bg-gradient-card border-0 text-center overflow-hidden animate-fade-in-up">
-              <CardHeader className="relative">
-                <div className="absolute inset-0 bg-gradient-primary opacity-5" />
-                <div className="relative z-10">
-                  <div className="inline-flex items-center justify-center p-4 bg-gradient-primary rounded-full mb-4 shadow-glow">
-                    <Phone className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <CardTitle className="text-2xl">Phone Support</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <p className="text-muted-foreground mb-4 text-lg">24/7 Emergency Support</p>
-                <p className="font-bold text-xl text-primary">+1 (555) 123-4567</p>
-                <div className="mt-4 flex items-center justify-center text-sm text-success font-medium">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Always Available
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-hover bg-gradient-card border-0 text-center overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-              <CardHeader className="relative">
-                <div className="absolute inset-0 bg-gradient-success opacity-5" />
-                <div className="relative z-10">
-                  <div className="inline-flex items-center justify-center p-4 bg-gradient-success rounded-full mb-4 shadow-glow">
-                    <Mail className="w-8 h-8 text-success-foreground" />
-                  </div>
-                  <CardTitle className="text-2xl">Email Support</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <p className="text-muted-foreground mb-4 text-lg">Get help within 2 hours</p>
-                <p className="font-bold text-xl text-accent">support@medanalytics.com</p>
-                <div className="mt-4 flex items-center justify-center text-sm text-success font-medium">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Fast Response
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-hover bg-gradient-card border-0 text-center overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              <CardHeader className="relative">
-                <div className="absolute inset-0 bg-gradient-warning opacity-5" />
-                <div className="relative z-10">
-                  <div className="inline-flex items-center justify-center p-4 bg-gradient-warning rounded-full mb-4 shadow-glow">
-                    <MapPin className="w-8 h-8 text-warning-foreground" />
-                  </div>
-                  <CardTitle className="text-2xl">Office Location</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="relative z-10">
-                <p className="text-muted-foreground mb-4 text-lg">Visit our headquarters</p>
-                <p className="font-bold text-xl text-primary">123 Medical Center Dr.<br />Healthcare City, HC 12345</p>
-                <div className="mt-4 flex items-center justify-center text-sm text-success font-medium">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Open 24/7
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+      
       
       
 
@@ -370,14 +317,10 @@ const Home = () => {
               </div>
               <span className="text-2xl font-bold">MedAnalytics</span>
             </div>
-            <div className="flex items-center space-x-3 bg-white/10 px-6 py-3 rounded-full backdrop-blur-sm animate-slide-up">
-              <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">HIPAA Compliant & Secure</span>
-            </div>
           </div>
           <div className="border-t border-primary-glow/20 pt-8 text-center">
             <p className="text-primary-glow text-lg">
-              © 2024 MedAnalytics. All rights reserved. | Privacy Policy | Terms of Service
+              
             </p>
           </div>
         </div>

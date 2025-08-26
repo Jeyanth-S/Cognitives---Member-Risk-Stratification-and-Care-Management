@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import PatientDetails from "./pages/PatientDetails";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -18,12 +19,17 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Authentication & Main Pages */}
           <Route path="/" element={<Login />} />
-          <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/index" element={<Index />} />
+
+          {/* Patient Pages */}
           <Route path="/patients" element={<PatientDetails />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/analytics" element={<Analytics />} />
+
+          {/* Catch-all 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
