@@ -14,13 +14,13 @@ users = {'caremanager': 'password123', 'admin': 'adminpass'}
 
 # DuckDB (⚠️ update this path to your actual .duckdb file)
 con = duckdb.connect(
-    r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\db\synpuf.duckdb",
+    r"C:\Users\ashraf deen\Downloads\Cognitives- Member Risk Stratification and Care Management\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\db\synpuf.duckdb",
     read_only=True
 )
 
 # Parquet paths
-MAIN_PATH = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\features\ml_features.parquet"
-CHRONIC_PATH = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\notebooks\combined_features_2010.parquet"
+MAIN_PATH = r"C:\Users\ashraf deen\Downloads\Cognitives- Member Risk Stratification and Care Management\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\features\ml_features.parquet"
+CHRONIC_PATH = r"C:\Users\ashraf deen\Downloads\Cognitives- Member Risk Stratification and Care Management\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\notebooks\combined_features_2010.parquet"
 
 # Load parquet data once (keep in memory for fast lookup)
 try:

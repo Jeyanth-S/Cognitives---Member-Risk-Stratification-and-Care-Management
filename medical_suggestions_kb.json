@@ -1,0 +1,140 @@
+[
+  {
+    "feature": "chronic_count_2010",
+    "condition": "high",
+    "min_value": 3,
+    "suggestion": "The patient has multiple chronic conditions, indicating a higher complexity of care. Such patients are at increased risk of hospitalization and adverse drug interactions. It is crucial to coordinate care between specialties to avoid treatment conflicts and duplications. Medication adherence should be assessed regularly, and patient education provided about managing symptoms and recognizing warning signs. Regular monitoring and comprehensive care planning are essential to improve quality of life and reduce complications."
+  },
+  {
+    "feature": "chronic_trend",
+    "condition": "increasing",
+    "threshold": 1,
+    "suggestion": "An increasing number of chronic conditions over time indicates potential progression or poor control. This warrants intensifying monitoring and re-evaluating current treatment regimens. Early intervention strategies should be employed to slow disease progression. Consider multidisciplinary team involvement and patient self-management education to improve outcomes."
+  },
+  {
+    "feature": "chronic_sum",
+    "condition": "high",
+    "min_value": 5,
+    "suggestion": "A high cumulative burden of chronic diseases suggests a complex clinical profile with high risk for complications. Medication reconciliation and review are critical to avoid polypharmacy and drug-drug interactions. Emphasis should be placed on preventative care measures and addressing social determinants of health that can impact disease management. Coordination with case managers can facilitate tailored interventions."
+  },
+  {
+    "feature": "total_visits",
+    "condition": "frequent",
+    "threshold": 20,
+    "suggestion": "Frequent healthcare visits may indicate unstable disease control or insufficient outpatient management. Care plans should be reviewed and optimized, including assessment for barriers to adherence or access. Consider comprehensive case management, including behavioral health integration and social support services to reduce acute care utilization."
+  },
+  {
+    "feature": "spend_per_visit",
+    "condition": "high",
+    "threshold": 500,
+    "suggestion": "High spending per visit often reflects expensive medications or procedures, which can affect patient adherence. A detailed medication review should explore opportunities to substitute costly medications with effective generics or therapeutic alternatives. Financial counseling and patient assistance programs can improve medication access. Monitoring adherence and outcomes closely ensures cost-effective care."
+  },
+  {
+    "feature": "avg_claim_amount",
+    "condition": "high",
+    "threshold": 1000,
+    "suggestion": "High average claim amounts may indicate use of advanced or costly interventions. Evaluation for cost-effectiveness and clinical appropriateness is vital to ensure healthcare resources are used efficiently. Engage the patient in shared decision-making regarding treatment options and consider non-pharmacologic interventions when appropriate."
+  },
+  {
+    "feature": "log_total_amount",
+    "condition": "high",
+    "threshold": 8,
+    "suggestion": "Elevated total medical expenditures denote high resource utilization, which can be driven by complex disease states or uncontrolled symptoms. Multidimensional interventions focusing on comprehensive disease management, adherence support, and addressing psychosocial issues should be implemented. Quality improvement initiatives targeting high-cost patients can enhance value."
+  },
+  {
+    "feature": "visits_per_chronic",
+    "condition": "high",
+    "threshold": 10,
+    "suggestion": "High healthcare visits per chronic condition raise concern for complications, poor disease control, or inadequate outpatient support. Intensified case management, close monitoring, and patient empowerment through education are recommended. Medication optimization and timely follow-up may reduce utilization."
+  },
+  {
+    "feature": "AGE",
+    "condition": "senior",
+    "min_value": 65,
+    "suggestion": "Advanced age is associated with higher risk for adverse drug reactions, cognitive decline, and frailty. Conduct comprehensive geriatric assessments, including medication review, functional status, and social support. Tailor pharmacotherapy to minimize polypharmacy, considering renal and hepatic function adjustments. Preventive care such as vaccinations and fall prevention is crucial."
+  },
+  {
+    "feature": "SP_ALZHDMTA",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Alzheimer’s disease requires multidisciplinary management focused on cognitive symptoms and caregiver support. Cholinesterase inhibitors such as donepezil may slow cognitive decline. Education on safety, behavioral symptoms, and advanced care planning is essential for patients and families."
+  },
+  {
+    "feature": "SP_CHF",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Congestive Heart Failure management includes optimizing pharmacotherapy with ACE inhibitors or ARBs, beta-blockers, and diuretics. Patient education should emphasize dietary sodium restriction and daily weight monitoring to detect fluid overload. Regular follow-up and multidisciplinary care reduce hospitalizations and enhance quality of life."
+  },
+  {
+    "feature": "SP_CHRNKIDN",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Chronic Kidney Disease necessitates careful medication dose adjustment and regular monitoring of renal function and electrolytes. Blood pressure and anemia management are important. Patient counseling on diet and hydration helps slow progression."
+  },
+  {
+    "feature": "SP_CNCR",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Cancer diagnosis requires individualized care plans including chemotherapy, symptom management, and supportive therapies. Coordination between oncology and primary care ensures holistic care. Psychosocial support and rehabilitation services are key components."
+  },
+  {
+    "feature": "SP_COPD",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "COPD management includes long-acting bronchodilators, inhaled corticosteroids, and smoking cessation support. Vaccinations against influenza and pneumococcus are recommended. Pulmonary rehabilitation improves functional capacity."
+  },
+  {
+    "feature": "SP_DEPRESSN",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Depression requires a comprehensive treatment plan combining antidepressant medications and psychotherapy. Regular follow-up is important to monitor symptoms and medication side effects. Screening for co-occurring conditions such as anxiety is recommended. Patient education about the importance of adherence and early symptom recognition can improve outcomes. Support services and counseling are valuable for sustained recovery."
+  },
+  {
+    "feature": "SP_DIABETES",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Diabetes management involves controlling blood sugar through medications like metformin along with lifestyle changes. Monitoring HbA1c every 3 to 6 months helps adjust treatment. Patients should be screened for complications such as neuropathy and eye disease annually. Education on diet, exercise, and self-monitoring is essential. Coordinated care helps prevent disease progression."
+  },
+  {
+    "feature": "SP_ISCHMCHT",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Ischemic heart disease treatment includes antiplatelet agents, statins, and beta-blockers to reduce cardiovascular risk. Lifestyle modifications such as smoking cessation and diet are important. Regular monitoring of blood pressure and cholesterol levels is necessary. Patient education about symptom recognition and medication adherence improves long-term outcomes."
+  },
+  {
+    "feature": "SP_OSTEOPRS",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Osteoporosis treatment focuses on strengthening bone health through calcium and vitamin D supplementation and bisphosphonates if needed. Fall risk assessments help prevent fractures. Patients should be encouraged to engage in weight-bearing exercises. Routine bone density monitoring guides treatment effectiveness."
+  },
+  {
+    "feature": "SP_RA_OA",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Management of rheumatoid and osteoarthritis involves NSAIDs for symptom relief and DMARDs to slow disease progression in RA. Physical therapy maintains joint function and reduces pain. Patient education on joint protection and activity modifications is essential. Regular follow-up ensures treatment adjustments."
+  },
+  {
+    "feature": "SP_STRKETIA",
+    "condition": "present",
+    "value": 1,
+    "suggestion": "Stroke or TIA history requires secondary prevention through antiplatelet or anticoagulant therapy. Blood pressure and cholesterol must be tightly controlled. Rehabilitation services support recovery and function improvement. Patient education on emergency signs and lifestyle changes reduces recurrence risk."
+  },
+  {
+    "feature": "BENE_HI_CVRAGE_TOT_MONS",
+    "condition": "low",
+    "max_value": 3,
+    "suggestion": "Limited health insurance coverage can restrict access to necessary care and medications. Assistance with enrollment in programs and financial counseling can alleviate barriers. Preventive care should be prioritized to avoid costly complications."
+  },
+  {
+    "feature": "BENE_SMI_CVRAGE_TOT_MONS",
+    "condition": "low",
+    "max_value": 3,
+    "suggestion": "Low supplemental coverage may lead to high out-of-pocket costs and affect medication adherence. Consider prescribing generic alternatives and connect patients with assistance programs. Regular follow-up helps identify adherence issues early."
+  },
+  {
+    "feature": "BENE_HMO_CVRAGE_TOT_MONS",
+    "condition": "low",
+    "max_value": 3,
+    "suggestion": "Limited HMO coverage may reduce access to coordinated and preventive care services. Educate patients about their benefits and encourage preventive healthcare use. Explore managed care enrollment options to improve coverage."
+  }
+]
