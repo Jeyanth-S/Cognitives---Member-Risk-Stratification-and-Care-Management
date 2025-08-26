@@ -2,12 +2,32 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
+import "./Analytics.css"; // import CSS
 
 const Analytics: React.FC = () => {
   const navigate = useNavigate();
 
   // ---------- State ----------
-  const [beneId, setBeneId] = useState("");
+  const [inputs, setInputs] = useState({
+    beneId: "",
+    carrier_num_claims: "",
+    carrier_total_payment: "",
+    chronic_count_2008: "",
+    inpatient_num_claims: "",
+    inpatient_total_payment: "",
+    inpatient_total_util_days: "",
+    num_unique_drg: "",
+    num_unique_inpatient_dx: "",
+    num_unique_outpatient_dx: "",
+    outpatient_num_claims: "",
+    outpatient_total_payment: "",
+    pde_num_prescriptions: "",
+    pde_total_drug_cost: "",
+    race: "",
+    sex: "",
+    total_spending: "",
+  });
+
   const [loadingPredict, setLoadingPredict] = useState(false);
   const [predictResult, setPredictResult] = useState<any>(null);
   const [predictError, setPredictError] = useState<string | null>(null);
@@ -16,22 +36,51 @@ const Analytics: React.FC = () => {
   const [careResult, setCareResult] = useState<any>(null);
   const [careError, setCareError] = useState<string | null>(null);
 
-  const [showPowerBI, setShowPowerBI] = useState(false); // for iframe toggle
+  const [showPowerBI, setShowPowerBI] = useState(false);
 
-  // ----------- Predictions -----------
+  // ---------- Handle Input Change ----------
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setInputs((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ---------- Risk Prediction ----------
   const handlePredict = async () => {
-    if (!beneId) {
+    if (!inputs.beneId) {
       setPredictError("Please enter a Beneficiary ID");
       return;
     }
+
     setLoadingPredict(true);
     setPredictError(null);
+
     try {
-      const res = await fetch("http://127.0.0.1:5000/predict", {
+      const res = await fetch("http://127.0.0.1:5000/risk", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bene_id: beneId }),
+        body: JSON.stringify({
+          member_index: 0,
+          features: {
+            carrier_num_claims: Number(inputs.carrier_num_claims),
+            carrier_total_payment: Number(inputs.carrier_total_payment),
+            chronic_count_2008: Number(inputs.chronic_count_2008),
+            inpatient_num_claims: Number(inputs.inpatient_num_claims),
+            inpatient_total_payment: Number(inputs.inpatient_total_payment),
+            inpatient_total_util_days: Number(inputs.inpatient_total_util_days),
+            num_unique_drg: Number(inputs.num_unique_drg),
+            num_unique_inpatient_dx: Number(inputs.num_unique_inpatient_dx),
+            num_unique_outpatient_dx: Number(inputs.num_unique_outpatient_dx),
+            outpatient_num_claims: Number(inputs.outpatient_num_claims),
+            outpatient_total_payment: Number(inputs.outpatient_total_payment),
+            pde_num_prescriptions: Number(inputs.pde_num_prescriptions),
+            pde_total_drug_cost: Number(inputs.pde_total_drug_cost),
+            race: Number(inputs.race),
+            sex: Number(inputs.sex),
+            total_spending: Number(inputs.total_spending),
+          },
+        }),
       });
+
       const data = await res.json();
       if (res.ok) {
         setPredictResult(data);
@@ -46,19 +95,18 @@ const Analytics: React.FC = () => {
     }
   };
 
-  // ----------- Care Insights -----------
+  // ---------- Care Insights ----------
   const handleCareInsights = async () => {
-    if (!beneId) {
+    if (!inputs.beneId) {
       setCareError("Please enter a Beneficiary ID");
       return;
     }
+
     setLoadingCare(true);
     setCareError(null);
+
     try {
-      const res = await fetch(`http://127.0.0.1:5001/patient/${beneId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const res = await fetch(`http://127.0.0.1:5001/patient/${inputs.beneId}`);
       const data = await res.json();
       if (res.ok) {
         setCareResult(data);
@@ -73,7 +121,7 @@ const Analytics: React.FC = () => {
     }
   };
 
-  // ----------- Word Report -----------
+  // ---------- Word Report ----------
   const exportWordReport = async () => {
     if (!careResult) return;
 
@@ -82,15 +130,19 @@ const Analytics: React.FC = () => {
         {
           properties: {},
           children: [
-            new Paragraph({ text: `Patient Analytics Report - ${beneId}`, heading: "Heading1", spacing: { after: 300 } }),
+            new Paragraph({ text: `Patient Analytics Report - ${inputs.beneId}`, heading: "Heading1", spacing: { after: 300 } }),
             new Paragraph({ text: "Risk tier prediction", heading: "Heading2", spacing: { after: 200 } }),
-            predictResult ? new Paragraph({
-              children: [
-                new TextRun({ text: `30 days: ${predictResult.predictions["30d"]}` }),
-                new TextRun({ text: `\n60 days: ${predictResult.predictions["60d"]}` }),
-                new TextRun({ text: `\n90 days: ${predictResult.predictions["90d"]}` }),
-              ]
-            }) : new Paragraph("No predictions available."),
+            predictResult
+              ? new Paragraph({
+                  children: [
+                    new TextRun({ text: `30 days cluster: ${predictResult.cluster_assignments["30_day"]}` }),
+                    new TextRun({ text: `\n60 days cluster: ${predictResult.cluster_assignments["60_day"]}` }),
+                    new TextRun({ text: `\n90 days cluster: ${predictResult.cluster_assignments["90_day"]}` }),
+                    new TextRun({ text: `\nRisk Tier: ${predictResult.risk_tier}` }),
+                    new TextRun({ text: `\nNarrative: ${predictResult.narrative}` }),
+                  ],
+                })
+              : new Paragraph("No predictions available."),
             new Paragraph({ text: "Care Management Insights", heading: "Heading2", spacing: { after: 200 } }),
             careResult.diseases && Array.isArray(careResult.diseases)
               ? new Paragraph({ text: `Detected Conditions:\n- ${careResult.diseases.join("\n- ")}` })
@@ -104,114 +156,89 @@ const Analytics: React.FC = () => {
     });
 
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `Patient_Report_${beneId}.docx`);
+    saveAs(blob, `Patient_Report_${inputs.beneId}.docx`);
   };
 
   return (
-    <div className="w-full min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="w-full bg-blue-600 text-white flex justify-between items-center px-6 py-4 shadow-md">
-        <h1 className="text-3xl font-bold">MED Analytics</h1>
-        <div className="flex gap-3">
-          <button className="header-btn bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded" onClick={() => navigate("/home")}>Dashboard</button>
-          <button className="header-btn bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded" onClick={exportWordReport}>Generate Word Report</button>
-          <button className="header-btn bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded" onClick={() => setShowPowerBI(!showPowerBI)}>View Output</button>
-          <button className="header-btn bg-blue-500 hover:bg-blue-700 px-4 py-2 rounded" onClick={() => navigate("/login")}>Logout</button>
+    <div className="analytics-container">
+      <header className="analytics-header">
+        <h1>MED Analytics</h1>
+        <div className="header-buttons">
+          <button onClick={() => navigate("/home")}>Dashboard</button>
+          <button onClick={exportWordReport}>Generate Word Report</button>
+          <button onClick={() => setShowPowerBI(!showPowerBI)}>View Output</button>
+          <button onClick={() => navigate("/login")}>Logout</button>
         </div>
       </header>
 
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
-        {/* Page Subtitle */}
-        <h2 className="text-2xl font-semibold text-center mb-4">Risk Stratification and Care Management</h2>
+      <div className="analytics-content">
+        <h2>Risk Stratification & Care Management</h2>
 
-        {/* Beneficiary Input */}
-        <input
-          type="text"
-          placeholder="Enter Beneficiary ID"
-          value={beneId}
-          onChange={(e) => setBeneId(e.target.value)}
-          className="border p-2 w-full mb-4 rounded"
-        />
+        {/* ---------- Input Form ---------- */}
+        <div className="inputs-grid">
+          {Object.entries(inputs).map(([key, value]) => (
+            <div key={key} className="input-item">
+              <label>{key.replace(/_/g, " ")}</label>
+              <input
+                type={key === "beneId" ? "text" : "number"}
+                name={key}
+                value={value}
+                onChange={handleInputChange}
+                placeholder={key === "beneId" ? "Enter Beneficiary ID" : "0"}
+              />
+            </div>
+          ))}
+        </div>
 
-        {/* ---------- Prediction Model ---------- */}
-        <div className="border rounded p-4 bg-white shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">Risk Prediction on 30/60/90 days windows</h2>
-          <button
-            onClick={handlePredict}
-            disabled={loadingPredict}
-            className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-          >
+        {/* ---------- Risk Prediction ---------- */}
+        <div className="card">
+          <h3>Risk Prediction (30/60/90 days)</h3>
+          <button onClick={handlePredict} disabled={loadingPredict}>
             {loadingPredict ? "Predicting..." : "Run Prediction"}
           </button>
-
-          {predictError && <p className="text-red-500 mt-3">{predictError}</p>}
-
-          {predictResult && predictResult.predictions && (
-            <div className="mt-4">
-              <h3 className="font-semibold mb-2">Predictions for {predictResult.bene_id}</h3>
-              <p>30 days: <span className="font-bold">{predictResult.predictions["30d"]}</span></p>
-              <p>60 days: <span className="font-bold">{predictResult.predictions["60d"]}</span></p>
-              <p>90 days: <span className="font-bold">{predictResult.predictions["90d"]}</span></p>
+          {predictError && <p className="error">{predictError}</p>}
+          {predictResult && (
+            <div className="results">
+              <p>30 days cluster: <strong>{predictResult.cluster_assignments["30_day"]}</strong></p>
+              <p>60 days cluster: <strong>{predictResult.cluster_assignments["60_day"]}</strong></p>
+              <p>90 days cluster: <strong>{predictResult.cluster_assignments["90_day"]}</strong></p>
+              <p>Risk Tier: <strong>{predictResult.risk_tier}</strong></p>
+              <p>Narrative: {predictResult.narrative}</p>
             </div>
           )}
         </div>
 
         {/* ---------- Care Management ---------- */}
-        <div className="border rounded p-4 bg-white shadow-sm">
-          <h2 className="text-xl font-semibold mb-2">Care Management Insights</h2>
-          <button
-            onClick={handleCareInsights}
-            disabled={loadingCare}
-            className="bg-green-600 text-white px-4 py-2 rounded w-full"
-          >
-            {loadingCare ? "Fetching Insights..." : "Get Care Suggestions"}
+        <div className="card">
+          <h3>Care Management Insights</h3>
+          <button onClick={handleCareInsights} disabled={loadingCare}>
+            {loadingCare ? "Fetching..." : "Get Care Suggestions"}
           </button>
-
-          {careError && <p className="text-red-500 mt-3">{careError}</p>}
-
+          {careError && <p className="error">{careError}</p>}
           {careResult && (
-            <div className="mt-4">
-              <h3 className="font-semibold mb-2">Patient ID: {careResult.patient_id || beneId}</h3>
-
-              {careResult.diseases && Array.isArray(careResult.diseases) && (
-                <div className="mb-4">
-                  <h4 className="font-semibold">Detected Conditions:</h4>
-                  <ul className="list-disc list-inside text-gray-700">
-                    {careResult.diseases.map((d: string, idx: number) => (
-                      <li key={idx}>{d}</li>
-                    ))}
-                  </ul>
-                </div>
+            <div className="results">
+              {careResult.diseases && (
+                <ul>{careResult.diseases.map((d: string, idx: number) => <li key={idx}>{d}</li>)}</ul>
               )}
-
-              {careResult.suggestions && Array.isArray(careResult.suggestions) && (
-                <div>
-                  <h4 className="font-semibold mb-2">Care Suggestions:</h4>
-                  <ul className="list-decimal list-inside text-gray-700 space-y-2">
-                    {careResult.suggestions.map((s: string, idx: number) => (
-                      <li key={idx}>{s}</li>
-                    ))}
-                  </ul>
-                </div>
+              {careResult.suggestions && (
+                <ul>{careResult.suggestions.map((s: string, idx: number) => <li key={idx}>{s}</li>)}</ul>
               )}
             </div>
           )}
         </div>
 
-        {/* ---------- Power BI Output ---------- */}
+        {/* ---------- Power BI ---------- */}
         {showPowerBI && (
-          <div className="mt-6 border rounded p-4 bg-white shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-center">Power BI Report</h2>
-            <div className="flex justify-center">
-              <iframe
-                title="cognitives"
-                width="800"
-                height="450"
-                src="https://app.powerbi.com/view?r=eyJrIjoiNDY0ZjM4NTktNDRkZS00MzdjLThjZmQtZTVlNDk2NmIzZDk3IiwidCI6ImI0NGNlZDU4LTJhMjMtNDE5MC1iNjRjLTNmMTljNTc5M2I1MCJ9"
-                frameBorder="0"
-                allowFullScreen
-              ></iframe>
-            </div>
+          <div className="card">
+            <h3>Power BI Report</h3>
+            <iframe
+              title="PowerBI"
+              width="800"
+              height="450"
+              src="https://app.powerbi.com/view?r=eyJrIjoiNDY0ZjM4NTktNDRkZS00MzdjLThjZmQtZTVlNDk2NmIzZDk3IiwidCI6ImI0NGNlZDU4LTJhMjMtNDE5MC1iNjRjLTNmMTljNTc5M2I1MCJ9"
+              frameBorder="0"
+              allowFullScreen
+            />
           </div>
         )}
       </div>

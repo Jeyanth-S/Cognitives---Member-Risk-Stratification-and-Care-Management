@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS  # <-- Add CORS
 import joblib
 import pandas as pd
 import matplotlib
@@ -14,6 +15,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from risk_engine import generate_member_risk_json  # Your core logic
 
 app = Flask(__name__)
+CORS(app)  # <-- Enable CORS for all routes
 
 # 🔹 Load models
 scaler = joblib.load('./pipeline/models/scaler.pkl')
@@ -24,22 +26,19 @@ model_60d = joblib.load('./pipeline/models/kmeans_60d.pkl')
 model_90d = joblib.load('./pipeline/models/kmeans_90d.pkl')
 
 # 🔹 Load member data (used for plotting endpoints)
-df = pd.read_parquet('./pipeline/features/ml_features.parquet')  # Adjust path as needed
+df = pd.read_parquet('./pipeline/features/ml_features.parquet')
 
 # 🔹 Feature sets
 features_30d_kmeans = model_30d.feature_names_in_.tolist()
 features_60d_kmeans = model_60d.feature_names_in_.tolist()
 features_90d_kmeans = model_90d.feature_names_in_.tolist()
 
-# 🔹 SHAP plot helper
-  # Headless-safe
 
+# 🔹 Helper functions
 def get_kmeans_risk(model, input_scaled):
-    # Get distance to closest cluster center
     distances = model.transform(input_scaled)[0]
     min_dist = np.min(distances)
     max_dist = np.max(distances)
-    # Normalize: closer = lower risk, farther = higher risk
     risk_score = (min_dist - distances.min()) / (distances.max() - distances.min() + 1e-6)
     return round(risk_score, 3)
 
@@ -72,10 +71,8 @@ def plot_shap_summary(shap_values, feature_names):
     plt.close()
     return buf
 
-def plot_risk_drift(risk_scores):
-    import matplotlib.pyplot as plt
-    import io
 
+def plot_risk_drift(risk_scores):
     windows = ['30d', '60d', '90d']
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.plot(windows, risk_scores, marker='o', color='teal', linewidth=2)
@@ -90,7 +87,6 @@ def plot_risk_drift(risk_scores):
     buf.seek(0)
     plt.close(fig)
     return buf
-
 
 
 # 🔹 Risk JSON endpoint
@@ -124,6 +120,7 @@ def get_risk_json():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 # 🔹 SHAP plot endpoint
 @app.route("/plot/shap/<int:member_index>")
 def shap_plot(member_index):
@@ -136,42 +133,33 @@ def shap_plot(member_index):
         top_features = [scaler.feature_names_in_[i] for i in top_indices]
         top_scores = [shap_values[i] for i in top_indices]
         buf = plot_shap_summary(top_scores, top_features)
-        print("Top features:", top_features)
-        print("Top scores:", top_scores)
-        print("Buffer size:", buf.getbuffer().nbytes)
-
         return send_file(buf, mimetype='image/png')
-
     except Exception as e:
-        print(f"[ERROR] SHAP plot failed for member {member_index}: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/plot/risk/<int:member_index>")
 def risk_drift_plot(member_index):
     try:
         member_row = df.iloc[member_index]
 
-        # Slice input for each model's feature set
         input_30 = pd.DataFrame([member_row])[features_30d_kmeans].fillna(0)
         input_60 = pd.DataFrame([member_row])[features_60d_kmeans].fillna(0)
         input_90 = pd.DataFrame([member_row])[features_90d_kmeans].fillna(0)
 
-        # Scale each input
         input_30_scaled = scaler.transform(input_30)
         input_60_scaled = scaler.transform(input_60)
         input_90_scaled = scaler.transform(input_90)
 
-        # Compute simulated risk via distance to centroid
         risk_30 = get_kmeans_risk(model_30d, input_30_scaled)
         risk_60 = get_kmeans_risk(model_60d, input_60_scaled)
         risk_90 = get_kmeans_risk(model_90d, input_90_scaled)
 
         buf = plot_risk_drift([risk_30, risk_60, risk_90])
         return send_file(buf, mimetype='image/png')
-
     except Exception as e:
-        print(f"[ERROR] Risk drift plot failed: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route("/explain/risk/<int:member_index>")
 def explain_risk(member_index):
@@ -188,4 +176,4 @@ def explain_risk(member_index):
 
 # 🔹 Run app
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)  # <-- Specify port explicitly
