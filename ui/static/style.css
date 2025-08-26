@@ -419,3 +419,13 @@ footer {
   background-color: #2980b9;
 }
 
+body {
+  font-family: 'Poppins', 'Open Sans', Arial, sans-serif;
+  background: 
+    url('https://www.svgbackgrounds.com/wp-content/uploads/2021/05/wave-haikei.svg') no-repeat center center fixed,
+    linear-gradient(135deg, #f3e7fa 0%, #e0f7fa 100%);
+  background-size: cover;
+  margin: 0;
+  color: #222;
+  line-height: 1.6;
+}
