@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction Results</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h2 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 8px 0; font-size: 18px; }
+        .card {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <h2>Prediction Results</h2>
+
+    <!-- Risk Scores -->
+    <div class="card">
+        <ul>
+            <li><b>Risk (30 days):</b> {{ result.Risk_30 }}</li>
+            <li><b>Risk (60 days):</b> {{ result.Risk_60 }}</li>
+            <li><b>Risk (90 days):</b> {{ result.Risk_90 }}</li>
+            <li><b>Tier:</b> {{ result.Tier }}</li>
+        </ul>
+    </div>
+
+    <!-- SHAP Story -->
+    {% if result.story %}
+    <div class="card">
+        <h3>Explanation</h3>
+        <p>{{ result.story }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Suggested Actions -->
+    {% if result.recommended %}
+    <div class="card">
+        <h3>Recommended Actions</h3>
+        <ul>
+            {% for action in result.recommended %}
+                <li>{{ action }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <!-- SHAP Image -->
+    {% if result.shap_img %}
+    <div class="card">
+        <h3>SHAP Explanation Plot</h3>
+        <img src="{{ url_for('send_shap', filename=result.shap_img) }}" 
+             alt="SHAP Explanation" width="600">
+    </div>
+    {% endif %}
+
+    <br>
+    <a href="{{ url_for('index') }}">⬅ Go Back</a>
+</body>
+</html>

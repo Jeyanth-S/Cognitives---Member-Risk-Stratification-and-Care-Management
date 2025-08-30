@@ -1,60 +1,107 @@
 import pandas as pd
 import numpy as np
-import joblib
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
-# ---- Paths ----
-FEATURES_PATH = "combined_features_2010.parquet"
-LABELS_PATH   = "risk_tiers_consistent.csv"
+# -------------------------------
+# Step 1. Load dataset
+# -------------------------------
+file_path = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\notebooks\beneficiary_with_recency.csv"
+df = pd.read_csv(file_path)
 
-# ---- Load data ----
-features_df = pd.read_parquet(FEATURES_PATH)
-labels_df   = pd.read_csv(LABELS_PATH)
+# -------------------------------
+# Step 2. Feature Engineering
+# -------------------------------
+# Disease columns (1 = has disease, 2 = no disease)
+disease_cols = [col for col in df.columns if "SP_" in col]
 
-# Merge on patient ID
-df = features_df.merge(labels_df, on="DESYNPUF_ID", how="inner")
+# Convert {1 = disease, 2 = no disease} → binary {1, 0}
+for col in disease_cols:
+    df[col] = df[col].apply(lambda x: 1 if x == 1 else 0)
 
-# ---- Parse AGE from BENE_BIRTH_DT ----
-def parse_birth_dt_to_age(birth_col, asof_year=2010):
-    s = birth_col.copy()
-    if np.issubdtype(s.dtype, np.number):  
-        s = s.astype("Int64").astype(str).str.zfill(8)
-    s = pd.to_datetime(s, format="%Y%m%d", errors="coerce")
-    ref = pd.Timestamp(f"{asof_year}-12-31")
-    return ((ref - s).dt.days // 365).astype("float")
+# Chronic disease burden in 2010
+disease_cols_2010 = [c for c in disease_cols if "_2010" in c]
+df["comorbidity_count_2010"] = df[disease_cols_2010].sum(axis=1)
 
-if "AGE" not in df.columns:
-    df["AGE"] = parse_birth_dt_to_age(df["BENE_BIRTH_DT"])
+# New comorbidities in 2009 vs 2008
+disease_cols_2009 = [c for c in disease_cols if "_2009" in c]
+disease_cols_2008 = [c.replace("2009", "2008") for c in disease_cols_2009]
 
-df["AGE"] = df["AGE"].fillna(df["AGE"].median())
+diff_2009 = df[disease_cols_2009].values - df[disease_cols_2008].values
+df["new_comorbidities_2009"] = np.clip(diff_2009, a_min=0, a_max=None).sum(axis=1)
 
-# ---- Create derived features ----
-df["chronic_trend"] = df["chronic_count_2010"] - df["chronic_count_2008"]
-df["chronic_sum"]   = df[["chronic_count_2008","chronic_count_2009","chronic_count_2010"]].sum(axis=1)
-df["spend_per_visit"] = df["total_amount"] / df["total_visits"].replace(0, 1)
-df["log_total_amount"] = np.log1p(df["total_amount"])
-df["log_avg_claim"] = np.log1p(df["avg_claim_amount"])
-df["visits_per_chronic"] = df["total_visits"] / (1+df["chronic_count_2010"])
+# New comorbidities in 2010 vs 2009
+diff_2010 = df[disease_cols_2010].values - df[disease_cols_2009].values
+df["new_comorbidities_2010"] = np.clip(diff_2010, a_min=0, a_max=None).sum(axis=1)
 
-# ---- Map tiers to numeric ----
-tier_map = {"Very Low":0, "Low":1, "Medium":2, "High":3, "Very High":4}
-df["tier_30d_num"] = df["tier_30d"].map(tier_map)
-df["tier_60d_num"] = df["tier_60d"].map(tier_map)
-df["tier_90d_num"] = df["tier_90d"].map(tier_map)
+# Persistent conditions (if condition persists across 2009 and 2010)
+df["persistent_conditions"] = ((df[disease_cols_2009].values + df[disease_cols_2010].values) == 2).sum(axis=1)
 
-# ---- Features (must match risk_tiers_consistent.py) ----
-features_30 = ["AGE","chronic_count_2010","chronic_trend","total_visits","spend_per_visit","log_avg_claim"]
-features_60 = ["AGE","chronic_count_2010","chronic_sum","total_visits","log_total_amount","log_avg_claim","visits_per_chronic"]
-features_90 = ["AGE","chronic_sum","total_visits","log_total_amount","spend_per_visit"]
+# Severity score (weighted like Charlson Index)
+weights = {
+    "SP_CHF_2010": 3,
+    "SP_COPD_2010": 2,
+    "SP_DIABETES_2010": 2,
+    "SP_CNCR_2010": 2,
+    "SP_DEPRESSN_2010": 1,
+    "SP_STRKETIA_2010": 2,
+    "SP_ALZHDMTA_2010": 2,
+    "SP_CHRNKIDN_2010": 3
+}
+df["severity_score"] = 0
+for col, w in weights.items():
+    if col in df.columns:
+        df["severity_score"] += df[col] * w
 
-# ---- Train RandomForest models ----
-clf_30 = RandomForestClassifier(n_estimators=200, random_state=42).fit(df[features_30], df["tier_30d_num"])
-clf_60 = RandomForestClassifier(n_estimators=200, random_state=42).fit(df[features_60], df["tier_60d_num"])
-clf_90 = RandomForestClassifier(n_estimators=200, random_state=42).fit(df[features_90], df["tier_90d_num"])
+# Total visits in last 90 days
+df["total_recent_visits"] = df["recent_visits_30"] + df["recent_visits_60"] + df["recent_visits_90"]
 
-# ---- Save models ----
-joblib.dump(clf_30, "model_30d.pkl")
-joblib.dump(clf_60, "model_60d.pkl")
-joblib.dump(clf_90, "model_90d.pkl")
+# Visit ratio
+df["visit_ratio_30_to_90"] = df.apply(
+    lambda x: x["recent_visits_30"] / x["recent_visits_90"] if x["recent_visits_90"] > 0 else 0,
+    axis=1
+)
 
-print("✅ Models trained and saved: model_30d.pkl, model_60d.pkl, model_90d.pkl")
+# -------------------------------
+# Step 3. Proxy Risk Scores (30/60/90)
+# -------------------------------
+df["Risk_30"] = (0.5 * df["recent_visits_30"] +
+                 0.3 * df["severity_score"] +
+                 0.2 * df["comorbidity_count_2010"])
+
+df["Risk_60"] = (0.4 * df["recent_visits_60"] +
+                 0.3 * df["severity_score"] +
+                 0.3 * df["comorbidity_count_2010"])
+
+df["Risk_90"] = (0.3 * df["recent_visits_90"] +
+                 0.3 * df["severity_score"] +
+                 0.4 * df["comorbidity_count_2010"])
+
+# Normalize scores 0–100
+for col in ["Risk_30", "Risk_60", "Risk_90"]:
+    df[col] = 100 * (df[col] - df[col].min()) / (df[col].max() - df[col].min())
+
+# -------------------------------
+# Step 4. Tier Stratification (KMeans clustering)
+# -------------------------------
+risk_features = df[["Risk_30", "Risk_60", "Risk_90"]]
+
+kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
+df["Tier"] = kmeans.fit_predict(risk_features)
+
+# Map clusters → ordered tiers (0=Low, 4=High)
+tier_order = df.groupby("Tier")[["Risk_30", "Risk_60", "Risk_90"]].mean().mean(axis=1).sort_values().index
+tier_map = {old: new for new, old in enumerate(tier_order)}
+df["Tier"] = df["Tier"].map(tier_map)
+
+# -------------------------------
+# Step 5. Export Final Output
+# -------------------------------
+output = df[[
+    "DESYNPUF_ID", "Risk_30", "Risk_60", "Risk_90", "Tier",
+    "comorbidity_count_2010", "new_comorbidities_2009", "new_comorbidities_2010",
+    "persistent_conditions", "severity_score", "total_recent_visits", "visit_ratio_30_to_90"
+]]
+
+output.to_csv("beneficiary_with_labels.csv", index=False)
+print("✅ Final file saved: beneficiary_with_labels.csv")
