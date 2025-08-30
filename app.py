@@ -22,17 +22,21 @@
 
 # # if __name__ == "__main__":
 # #     app.run(host="0.0.0.0", port=5000, debug=True)
-
-
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 from retriever import get_patient_info
+import os
 
 app = Flask(__name__)
 
 @app.route("/patient/<patient_id>", methods=["GET"])
 def patient_info(patient_id):
-    result = get_patient_info(patient_id)
-    return jsonify(result)
+    try:
+        result = get_patient_info(patient_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    host = os.getenv("FLASK_RUN_HOST", "0.0.0.0")
+    port = int(os.getenv("FLASK_RUN_PORT", 5000))
+    app.run(debug=True, host=host, port=port)
