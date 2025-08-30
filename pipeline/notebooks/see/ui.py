@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import shap
 import matplotlib
+import duckdb   # ✅ new
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -29,13 +30,13 @@ xgb90 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk90.joblib"))
 with open(os.path.join(ARTIFACT_DIR, "test_features.json"), "r") as f:
     FEATURES = json.load(f)
 
-# Existing beneficiaries dataset
-DATA_PATH = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\notebooks\beneficiary_with_labels.csv"
-df_existing = pd.read_csv(DATA_PATH)
+# ✅ DuckDB database
+DB_PATH = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\db\synpuf.duckdb"
+con = duckdb.connect(DB_PATH)
 
-# -----------------------------
-# HELPERS
-# -----------------------------
+# Load existing beneficiaries (from DuckDB instead of CSV)
+df_existing = con.execute("SELECT * FROM beneficiary_with_labels").df()
+
 TIER_ACTIONS = {
     3: ["Immediate intensive case management", "Specialist referral", "Home health assessment"],
     2: ["Care coordinator assignment", "Follow-up in 7 days", "Medication review"],
@@ -114,12 +115,7 @@ def engineer_features(df_raw):
     return df_raw
 
 def build_shap_story(shap_values, features, row, horizon_label):
-    """
-    Turn SHAP values into a human-friendly explanation story.
-    Shows top 5 drivers with readable names and rounded values.
-    """
-
-    # Friendly names for features
+    """Turn SHAP values into a human-friendly explanation story."""
     FRIENDLY = {
         "total_recent_visits": "Frequent visits (last 90 days)",
         "severity_score": "Overall severity of conditions",
@@ -131,50 +127,36 @@ def build_shap_story(shap_values, features, row, horizon_label):
         "AGE_2010": "Patient age"
     }
 
-    # Extract SHAP values
     vals = shap_values.values[0] if hasattr(shap_values, "values") else shap_values[0]
-
-    # Top 5 absolute contributors
     top_idx = np.argsort(np.abs(vals))[-5:][::-1]
 
     phrases = []
     for i in top_idx:
         feat = features[i]
-        fname = FRIENDLY.get(feat, feat.replace("_", " ").title())  # fallback to raw name
+        fname = FRIENDLY.get(feat, feat.replace("_", " ").title())
         val = row[feat]
-
-        # Round values for readability
         if isinstance(val, float):
             val = round(val, 2)
-
         impact = "increases" if vals[i] > 0 else "decreases"
         phrases.append(f"{fname}: {val} → {impact} risk")
 
-    # Combine into readable story
     return f"For {horizon_label}, main drivers are: " + "; ".join(phrases) + "."
-
 
 def get_predictions(features, beneficiary_id=None, use_model=True):
     """Predict risks + build explanation and recommendations."""
     if use_model:
-        # --- New patient flow ---
         X = pd.DataFrame([features], columns=FEATURES)
-
-        # Predict risks
         risk30 = float(xgb30.predict(X)[0])
         risk60 = float(xgb60.predict(X)[0])
         risk90 = float(xgb90.predict(X)[0])
         tier = compute_tier(risk30, risk60, risk90)
 
-        # SHAP explanation
         explainer = shap.TreeExplainer(xgb30)
         shap_values = explainer(X)
         story = build_shap_story(shap_values, FEATURES, X.iloc[0], "30-day risk")
 
-        # Tier recommendations
         recommended = TIER_ACTIONS.get(tier, ["Routine care"])
 
-        # Save SHAP plot in figs_test
         fig, ax = plt.subplots(figsize=(8, 6))
         shap.plots.bar(shap_values, show=False)
         shap_img_name = f"{beneficiary_id if beneficiary_id else 'new_patient'}_Risk30_shap.png"
@@ -183,14 +165,12 @@ def get_predictions(features, beneficiary_id=None, use_model=True):
         plt.close(fig)
 
     else:
-        # --- Existing patient flow ---
         risk30 = features.get("Risk_30", 0)
         risk60 = features.get("Risk_60", 0)
         risk90 = features.get("Risk_90", 0)
         tier = features.get("Tier", compute_tier(risk30, risk60, risk90))
 
         X = pd.DataFrame([features], columns=FEATURES)
-
         explainer = shap.TreeExplainer(xgb30)
         shap_values = explainer(X)
         story = build_shap_story(shap_values, FEATURES, X.iloc[0], "30-day risk")
@@ -224,7 +204,7 @@ def index():
 
         if mode == "existing":
             beneficiary_id = request.form.get("beneficiary_id")
-            row = df_existing[df_existing["DESYNPUF_ID"] == beneficiary_id]
+            row = con.execute(f"SELECT * FROM beneficiary_with_labels WHERE DESYNPUF_ID='{beneficiary_id}'").df()
             if row.empty:
                 return render_template("index.html", error="Beneficiary ID not found")
             features = row.iloc[0].to_dict()
@@ -236,10 +216,27 @@ def index():
                 return render_template("index.html", error="Please upload a CSV file with patient data")
             try:
                 df_new = pd.read_csv(uploaded_file)
+                bene_id = df_new["DESYNPUF_ID"].iloc[0]
+
+                # ✅ Check if already exists in recency table
+                check = con.execute(f"SELECT * FROM beneficiary_with_recency WHERE DESYNPUF_ID='{bene_id}'").df()
+                if not check.empty:
+                    return render_template("index.html", error=f"User {bene_id} is already available")
+
+                # Insert new patient into beneficiary_with_recency
+                con.register("df_new", df_new)
+                con.execute("INSERT INTO beneficiary_with_recency SELECT * FROM df_new")
+
                 df_new = engineer_features(df_new)
                 new_row = df_new.iloc[0].to_dict()
                 features = {col: new_row.get(col, 0) for col in FEATURES}
                 result = get_predictions(features, beneficiary_id=None, use_model=True)
+
+                # Store prediction + features in beneficiary_with_labels
+                out_df = pd.DataFrame([{**new_row, **result, "DESYNPUF_ID": bene_id}])
+                con.register("out_df", out_df)
+                con.execute("INSERT INTO beneficiary_with_labels SELECT * FROM out_df")
+
             except Exception as e:
                 return render_template("index.html", error=f"Error processing file: {str(e)}")
 
