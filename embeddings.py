@@ -7,7 +7,7 @@ import os
 import time
 from sentence_transformers import SentenceTransformer
 from pinecone import Pinecone, ServerlessSpec
-import config
+import config 
 
 # Load embedding model
 print("Loading embedding model:", config.EMBEDDING_MODEL)

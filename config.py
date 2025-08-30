@@ -8,7 +8,7 @@
 # EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 # EMBEDDING_DIM = 384
 
-import os
+import os 
 
 # Pinecone / Index config - set these as environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "pcsk_21v5L9_KcXSiqLsDwZLxMYdz5aHu6vvh9EtPAvLZDTBAQqGdwAKMEgPJ7GFsk1VGavdhh2")
