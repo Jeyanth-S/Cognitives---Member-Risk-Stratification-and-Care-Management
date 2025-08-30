@@ -150,7 +150,7 @@
 
 from typing import List, Dict
 import config
-import re
+import re 
 
 USE_LOCAL = config.USE_LOCAL_GENERATOR and config.GENERATIVE_MODEL
 
