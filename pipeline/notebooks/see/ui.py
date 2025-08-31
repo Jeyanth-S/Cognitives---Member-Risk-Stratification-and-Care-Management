@@ -172,9 +172,7 @@ def get_predictions(features, bene_id="new_patient"):
         "recommended": recs,
     }
 
-# -----------------------------
-# ROUTES
-# -----------------------------
+
 @app.route("/predict", methods=["POST"])
 def predict():
     global df_existing
