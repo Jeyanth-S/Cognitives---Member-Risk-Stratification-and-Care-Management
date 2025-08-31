@@ -17,21 +17,21 @@ import matplotlib.pyplot as plt
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-ARTIFACT_DIR = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\notebooks\artifacts"
+ARTIFACT_DIR = r"/media/jeyanth-s/DevDrive/AI_Workspace/projects/Cognitives---Member-Risk-Stratification-and-Care-Management/pipeline/notebooks/artifacts"
 FIG_DIR = os.path.join(ARTIFACT_DIR, "figs")
 os.makedirs(FIG_DIR, exist_ok=True)
 
 # Models
-xgb30 = joblib.load(os.path.join(ARTIFACT_DIR, "xgb_risk30.joblib"))
-xgb60 = joblib.load(os.path.join(ARTIFACT_DIR, "xgb_risk60.joblib"))
-xgb90 = joblib.load(os.path.join(ARTIFACT_DIR, "xgb_risk90.joblib"))
+xgb30 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk30.joblib"))
+xgb60 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk60.joblib"))
+xgb90 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk90.joblib"))
 
 # Feature list
-with open(os.path.join(ARTIFACT_DIR, "features.json"), "r") as f:
+with open(os.path.join(ARTIFACT_DIR, "test_features.json"), "r") as f:
     FEATURES = json.load(f)
 
 # Existing patients
-DATA_PATH = os.path.join(ARTIFACT_DIR, "..", "beneficiary_with_labels.csv")
+DATA_PATH = os.path.join(ARTIFACT_DIR, "../../../beneficiary_with_labels.csv") # os.path.join(ARTIFACT_DIR, ".", "beneficiary_with_labels.csv")
 DATA_PATH = os.path.abspath(DATA_PATH)
 if os.path.exists(DATA_PATH):
     df_existing = pd.read_csv(DATA_PATH)
@@ -237,6 +237,26 @@ def predict():
 @app.route("/figs/<filename>")
 def send_shap(filename):
     return send_from_directory(FIG_DIR, filename)
+
+@app.route("/recency/<beneficiary_id>", methods=["GET"])
+def get_beneficiary_recency(beneficiary_id):
+    """
+    Returns the row for the given beneficiary_id from beneficiary_with_recency.csv
+    """
+    recency_path = os.path.join(ARTIFACT_DIR, "../beneficiary_with_recency.csv")
+    recency_path = os.path.abspath(recency_path)
+    if not os.path.exists(recency_path):
+        return jsonify({"error": "beneficiary_with_recency.csv not found"}), 404
+
+    try:
+        df_recency = pd.read_csv(recency_path)
+        row = df_recency[df_recency["DESYNPUF_ID"] == beneficiary_id]
+        print(row)
+        if row.empty:
+            return jsonify({"error": "Beneficiary ID not found"}), 404
+        return jsonify(row.iloc[0].to_dict())
+    except Exception as e:
+        return jsonify({"error": f"Error reading recency file: {str(e)}"}), 500
 
 # -----------------------------
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Document, Packer, Paragraph, TextRun } from "docx";
 import { saveAs } from "file-saver";
@@ -27,6 +27,70 @@ const Analytics: React.FC = () => {
   const [loadingCare, setLoadingCare] = useState(false);
 
   const [showPowerBI, setShowPowerBI] = useState(false);
+
+  // ---------- ROI ----------
+  const [roiData, setRoiData] = useState<any>(null);
+  const [loadingROI, setLoadingROI] = useState(false);
+  const [roiError, setRoiError] = useState<string | null>(null);
+
+  // Clear ROI data when beneId changes
+  useEffect(() => {
+    setRoiData(null);
+    setRoiError(null);
+  }, [beneId]);
+
+  const fetchROIData = async (beneId: string) => {
+    setLoadingROI(true);
+    setRoiError(null);
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/recency/${beneId}`);
+      const data = await res.json();
+      console.log("ROI API response:", data); // <-- Add this line
+      if (res.ok && !data.error) {
+        setRoiData(data);
+      } else {
+        setRoiError(data.error || "Failed to fetch ROI data");
+        setRoiData(null);
+      }
+    } catch (err) {
+      setRoiError("Failed to connect to backend");
+      setRoiData(null);
+    } finally {
+      setLoadingROI(false);
+    }
+  };
+
+  // Compute ROI from recency API data and prediction result
+  const getProxyROI = () => {
+    if (
+      roiData &&
+      roiData.LAST_YEAR_TOTAL_COST != null &&
+      predictResult &&
+      predictResult.Tier != null
+    ) {
+      const tierReductionMap: { [key: string]: number } = {
+        "1": 0.25,
+        "2": 0.18,
+        "3": 0.12,
+        "4": 0.07,
+        "5": 0.03,
+      };
+      const tier = String(predictResult.Tier);
+      const reduction = tierReductionMap[tier] || 0;
+      const last_year_expense = roiData.LAST_YEAR_TOTAL_COST;
+      const last_year_total_spend = roiData.LAST_YEAR_TOTAL_COST; // Only field available
+      if (!last_year_total_spend || last_year_total_spend === 0) return null;
+      const proxy_roi = (last_year_expense * reduction) / last_year_total_spend;
+      return {
+        last_year_expense,
+        last_year_total_spend,
+        tier,
+        reduction,
+        proxy_roi,
+      };
+    }
+    return null;
+  };
 
   // ---------- Handlers ----------
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,12 +150,16 @@ const Analytics: React.FC = () => {
       const data = await res.json();
       if (res.ok) {
         setPredictResult(data);
+        // Fetch ROI data immediately after prediction
+        fetchROIData(beneId);
       } else {
         setPredictError(data.error || "Prediction failed");
+        setRoiData(null);
       }
     } catch (err) {
       console.error(err);
       setPredictError("Failed to connect to backend");
+      setRoiData(null);
     } finally {
       setLoadingPredict(false);
     }
@@ -329,6 +397,91 @@ const Analytics: React.FC = () => {
                 </ul>
               </div>
             )}
+          </div>
+
+          {/* ROI Card */}
+          <div className="card">
+            <h3>ROI Calculation</h3>
+            <button
+              className="roi-btn"
+              style={{
+                marginBottom: "10px",
+                background: "#2563eb",
+                color: "#fff",
+                border: "none",
+                borderRadius: "5px",
+                padding: "8px 18px",
+                fontWeight: 600,
+                cursor: loadingROI || !beneId ? "not-allowed" : "pointer",
+                opacity: loadingROI || !beneId ? 0.6 : 1,
+                transition: "opacity 0.2s",
+              }}
+              onClick={() => fetchROIData(beneId)}
+              disabled={loadingROI || !beneId}
+            >
+              {loadingROI ? "Fetching ROI..." : "Predict ROI"}
+            </button>
+            {roiError && <p className="error">{roiError}</p>}
+            {(() => {
+              const roi = getProxyROI();
+              if (roiData && predictResult && !roiError && roi) {
+                return (
+                  <>
+                    <div className="results">
+                      <p>Last Year Expense: <strong>{roi.last_year_expense}</strong></p>
+                      <p>Last Year Total Spend: <strong>{roi.last_year_total_spend}</strong></p>
+                      <p>Risk Tier: <strong>{roi.tier}</strong></p>
+                      <p>Reduction % (by Tier): <strong>{roi.reduction * 100}%</strong></p>
+                      <p>
+                        <strong>Proxy ROI:</strong>{" "}
+                        {roi.proxy_roi !== null
+                          ? roi.proxy_roi.toFixed(4)
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <div className="roi-benefit-bar" style={{ display: "flex", width: "100%", margin: "10px 0 0 0", height: "32px", borderRadius: "4px", overflow: "hidden", boxShadow: "0 1px 4px #0001" }}>
+                      <div
+                        className="roi-bar-saved"
+                        style={{
+                          width: `${roi.reduction * 100}%`,
+                          background: "#22c55e",
+                          color: "#fff",
+                          padding: "4px 0",
+                          borderRadius: "4px",
+                          textAlign: "center",
+                          fontWeight: 600,
+                          transition: "width 0.5s",
+                        }}
+                      >
+                        Potential Savings: {Math.round(roi.reduction * 100)}%
+                      </div>
+                      <div
+                        className="roi-bar-remaining"
+                        style={{
+                          width: `${100 - roi.reduction * 100}%`,
+                          background: "#e5e7eb",
+                          color: "#222",
+                          padding: "4px 0",
+                          borderRadius: "4px",
+                          textAlign: "center",
+                          fontWeight: 400,
+                          transition: "width 0.5s",
+                        }}
+                      >
+                        Remaining Spend
+                      </div>
+                    </div>
+                    <p style={{ marginTop: 10 }}>
+                      <strong>Interpretation:</strong> By applying targeted care management for this risk tier, you could potentially reduce last year's expense by <b>{Math.round(roi.reduction * 100)}%</b>, improving both patient outcomes and cost efficiency.
+                    </p>
+                  </>
+                );
+              } else if (!loadingROI && !roiError) {
+                return <p className="error">Click "Predict ROI" to view calculation.</p>;
+              } else {
+                return null;
+              }
+            })()}
           </div>
         </div>
       )}
