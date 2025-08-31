@@ -279,36 +279,178 @@ const Analytics: React.FC = () => {
 
       {/* ---------- New User ---------- */}
       {activeTab === "new" && (
-        <div className="card">
-          <h3>New Patient Risk Prediction</h3>
-          <input type="file" accept=".csv" onChange={handleFileChange} />
-          <button onClick={handleNewUserPredict} disabled={loadingNewUser}>
-            {loadingNewUser ? "Processing..." : "Upload & Predict"}
-          </button>
-          {newUserError && <p className="error">{newUserError}</p>}
+        <div>
+          {/* Prediction Card */}
+          <div className="card">
+            <h3>New Patient Risk Prediction</h3>
+            <input type="file" accept=".csv" onChange={handleFileChange} />
+            <button onClick={handleNewUserPredict} disabled={loadingNewUser}>
+              {loadingNewUser ? "Processing..." : "Upload & Predict"}
+            </button>
+            {newUserError && <p className="error">{newUserError}</p>}
+            {newUserResult && (
+              <div className="results">
+                <p>30-day Risk: <strong>{newUserResult.Risk_30}</strong></p>
+                <p>60-day Risk: <strong>{newUserResult.Risk_60}</strong></p>
+                <p>90-day Risk: <strong>{newUserResult.Risk_90}</strong></p>
+                <p>Risk Tier: <strong>{newUserResult.Tier}</strong></p>
+                <p>Explanation: {newUserResult.story}</p>
+                <p>
+                  Recommended Actions:{" "}
+                  {newUserResult.recommended?.map((a: string, i: number) => (
+                    <span key={i}>
+                      {a}
+                      {i < newUserResult.recommended.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </p>
+                {newUserResult.shap_img && (
+                  <img
+                    src={`http://127.0.0.1:5000/figs/${newUserResult.shap_img}`}
+                    alt="SHAP"
+                    style={{ width: "500px", marginTop: "10px" }}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Care Management Card */}
           {newUserResult && (
-            <div className="results">
-              <p>30-day Risk: <strong>{newUserResult.Risk_30}</strong></p>
-              <p>60-day Risk: <strong>{newUserResult.Risk_60}</strong></p>
-              <p>90-day Risk: <strong>{newUserResult.Risk_90}</strong></p>
-              <p>Risk Tier: <strong>{newUserResult.Tier}</strong></p>
-              <p>Explanation: {newUserResult.story}</p>
-              <p>
-                Recommended Actions:{" "}
-                {newUserResult.recommended?.map((a: string, i: number) => (
-                  <span key={i}>
-                    {a}
-                    {i < newUserResult.recommended.length - 1 ? ", " : ""}
-                  </span>
-                ))}
-              </p>
-              {newUserResult.shap_img && (
-                <img
-                  src={`http://127.0.0.1:5000/figs/${newUserResult.shap_img}`}
-                  alt="SHAP"
-                  style={{ width: "500px", marginTop: "10px" }}
-                />
+            <div className="card">
+              <h3>Care Management Insights</h3>
+              {newUserResult.careError && <p className="error">{newUserResult.careError}</p>}
+              {newUserResult.suggestions && (
+                <div className="results">
+                  <h4>Detected Conditions</h4>
+                  <ul>
+                    {newUserResult.diseases?.map((d: string, idx: number) => (
+                      <li key={idx}>{d}</li>
+                    ))}
+                  </ul>
+                  <h4>Care Suggestions</h4>
+                  <ul>
+                    {newUserResult.suggestions?.map((s: any, idx: number) => (
+                      <li key={idx}>
+                        <strong>{s.disease}</strong>
+                        <p>{s.suggestion}</p>
+                        <details>
+                          <summary>Source Chunks</summary>
+                          <ul>
+                            {s.source_chunks.map((chunk: string, i: number) => (
+                              <li key={i}>{chunk}</li>
+                            ))}
+                          </ul>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
+            </div>
+          )}
+
+          {/* ROI Card */}
+          {newUserResult && (
+            <div className="card">
+              <h3>ROI Calculation</h3>
+              <button
+                className="roi-btn"
+                style={{
+                  marginBottom: "10px",
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "5px",
+                  padding: "8px 18px",
+                  fontWeight: 600,
+                  cursor: loadingROI || !newUserResult.DESYNPUF_ID ? "not-allowed" : "pointer",
+                  opacity: loadingROI || !newUserResult.DESYNPUF_ID ? 0.6 : 1,
+                  transition: "opacity 0.2s",
+                }}
+                onClick={() => fetchROIData(newUserResult.DESYNPUF_ID)}
+                disabled={loadingROI || !newUserResult.DESYNPUF_ID}
+              >
+                {loadingROI ? "Fetching ROI..." : "Predict ROI"}
+              </button>
+              {roiError && <p className="error">{roiError}</p>}
+              {(() => {
+                // Use newUserResult.Tier for tier, and roiData for cost
+                const tierReductionMap: { [key: string]: number } = {
+                  "1": 0.25,
+                  "2": 0.18,
+                  "3": 0.12,
+                  "4": 0.07,
+                  "5": 0.03,
+                };
+                if (
+                  roiData &&
+                  roiData.LAST_YEAR_TOTAL_COST != null &&
+                  newUserResult.Tier != null
+                ) {
+                  const tier = String(newUserResult.Tier);
+                  const reduction = tierReductionMap[tier] || 0;
+                  const last_year_expense = roiData.LAST_YEAR_TOTAL_COST;
+                  const last_year_total_spend = roiData.LAST_YEAR_TOTAL_COST;
+                  const proxy_roi =
+                    last_year_total_spend && last_year_total_spend !== 0
+                      ? (last_year_expense * reduction) / last_year_total_spend
+                      : null;
+                  return (
+                    <>
+                      <div className="results">
+                        <p>Last Year Expense: <strong>{last_year_expense}</strong></p>
+                        <p>Last Year Total Spend: <strong>{last_year_total_spend}</strong></p>
+                        <p>Risk Tier: <strong>{tier}</strong></p>
+                        <p>Reduction % (by Tier): <strong>{reduction * 100}%</strong></p>
+                        <p>
+                          <strong>Proxy ROI:</strong>{" "}
+                          {proxy_roi !== null ? proxy_roi.toFixed(4) : "N/A"}
+                        </p>
+                      </div>
+                      <div className="roi-benefit-bar" style={{ display: "flex", width: "100%", margin: "10px 0 0 0", height: "32px", borderRadius: "4px", overflow: "hidden", boxShadow: "0 1px 4px #0001" }}>
+                        <div
+                          className="roi-bar-saved"
+                          style={{
+                            width: `${reduction * 100}%`,
+                            background: "#22c55e",
+                            color: "#fff",
+                            padding: "4px 0",
+                            borderRadius: "4px",
+                            textAlign: "center",
+                            fontWeight: 600,
+                            transition: "width 0.5s",
+                          }}
+                        >
+                          Potential Savings: {Math.round(reduction * 100)}%
+                        </div>
+                        <div
+                          className="roi-bar-remaining"
+                          style={{
+                            width: `${100 - reduction * 100}%`,
+                            background: "#e5e7eb",
+                            color: "#222",
+                            padding: "4px 0",
+                            borderRadius: "4px",
+                            textAlign: "center",
+                            fontWeight: 400,
+                            transition: "width 0.5s",
+                          }}
+                        >
+                          Remaining Spend
+                        </div>
+                      </div>
+                      <p style={{ marginTop: 10 }}>
+                        <strong>Interpretation:</strong> By applying targeted care management for this risk tier, you could potentially reduce last year's expense by <b>{Math.round(reduction * 100)}%</b>, improving both patient outcomes and cost efficiency.
+                      </p>
+                    </>
+                  );
+                } else if (!loadingROI && !roiError) {
+                  return <p className="error">Click "Predict ROI" to view calculation.</p>;
+                } else {
+                  return null;
+                }
+              })()}
             </div>
           )}
         </div>
