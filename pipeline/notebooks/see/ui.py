@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import shap
 import matplotlib
-import duckdb   # ✅ new
+import duckdb
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -16,55 +16,55 @@ import matplotlib.pyplot as plt
 app = Flask(__name__)
 
 ARTIFACT_DIR = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\notebooks\artifacts"
-
-# ✅ Use separate figs folder for testing
 FIG_DIR = os.path.join(ARTIFACT_DIR, "figs_test")
 os.makedirs(FIG_DIR, exist_ok=True)
 
-# ✅ Load test models (not production ones)
+# Load models
 xgb30 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk30.joblib"))
 xgb60 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk60.joblib"))
 xgb90 = joblib.load(os.path.join(ARTIFACT_DIR, "test_xgb_risk90.joblib"))
 
-# Load test feature list
+# Features
 with open(os.path.join(ARTIFACT_DIR, "test_features.json"), "r") as f:
     FEATURES = json.load(f)
 
-# ✅ DuckDB database
+# DuckDB path
 DB_PATH = r"C:\Users\kesh2\OneDrive\Documents\Cognitives---Member-Risk-Stratification-and-Care-Management\pipeline\db\synpuf.duckdb"
-con = duckdb.connect(DB_PATH)
 
-# Load existing beneficiaries (from DuckDB instead of CSV)
-df_existing = con.execute("SELECT * FROM beneficiary_with_labels").df()
-
+# -----------------------------
+# HELPERS
+# -----------------------------
 TIER_ACTIONS = {
-    3: ["Immediate intensive case management", "Specialist referral", "Home health assessment"],
-    2: ["Care coordinator assignment", "Follow-up in 7 days", "Medication review"],
-    1: ["Outpatient follow-up", "Chronic disease coaching"],
-    0: ["Routine wellness", "Preventive reminders"]
+    0: ["Routine screening", "Preventive reminders"],
+    1: ["Preventive care follow-up", "Lifestyle coaching"],
+    2: ["Outpatient follow-up", "Chronic disease coaching"],
+    3: ["Care coordinator assignment", "Follow-up in 7 days", "Medication review"],
+    4: ["Immediate intensive case management", "Specialist referral", "Home health assessment"],
 }
 
 def compute_tier(risk30, risk60, risk90):
-    """Assign tier based on average risk (kept original logic)."""
+    """5-level stratification."""
     avg_risk = (risk30 + risk60 + risk90) / 3
-    if avg_risk < 20:
-        return 1  # Low
-    elif avg_risk < 50:
-        return 2  # Medium
+    if avg_risk <= 20:
+        return 0
+    elif avg_risk <= 40:
+        return 1
+    elif avg_risk <= 60:
+        return 2
+    elif avg_risk <= 80:
+        return 3
     else:
-        return 3  # High
+        return 4
 
 def engineer_features(df_raw):
-    """Feature engineering for new patient CSVs."""
+    """Feature engineering from uploaded CSV."""
     disease_cols = [col for col in df_raw.columns if "SP_" in col]
     for col in disease_cols:
         df_raw[col] = df_raw[col].apply(lambda x: 1 if x == 1 else 0)
 
-    # Comorbidity count
     disease_cols_2010 = [c for c in disease_cols if "_2010" in c]
     df_raw["comorbidity_count_2010"] = df_raw[disease_cols_2010].sum(axis=1) if disease_cols_2010 else 0
 
-    # New comorbidities
     disease_cols_2009 = [c for c in disease_cols if "_2009" in c]
     disease_cols_2008 = [c.replace("2009", "2008") for c in disease_cols_2009]
     if disease_cols_2009 and all(col in df_raw.columns for col in disease_cols_2008):
@@ -79,7 +79,6 @@ def engineer_features(df_raw):
     else:
         df_raw["new_comorbidities_2010"] = 0
 
-    # Persistent conditions
     if disease_cols_2009 and disease_cols_2010:
         df_raw["persistent_conditions"] = (
             (df_raw[disease_cols_2009].values + df_raw[disease_cols_2010].values) == 2
@@ -87,7 +86,6 @@ def engineer_features(df_raw):
     else:
         df_raw["persistent_conditions"] = 0
 
-    # Severity score
     weights = {
         "SP_CHF_2010": 3, "SP_COPD_2010": 2, "SP_DIABETES_2010": 2,
         "SP_CNCR_2010": 2, "SP_DEPRESSN_2010": 1, "SP_STRKETIA_2010": 2,
@@ -98,7 +96,6 @@ def engineer_features(df_raw):
         if col in df_raw.columns:
             df_raw["severity_score"] += df_raw[col] * w
 
-    # Visits
     for v in ["recent_visits_30","recent_visits_60","recent_visits_90"]:
         if v not in df_raw.columns:
             df_raw[v] = 0
@@ -115,7 +112,6 @@ def engineer_features(df_raw):
     return df_raw
 
 def build_shap_story(shap_values, features, row, horizon_label):
-    """Turn SHAP values into a human-friendly explanation story."""
     FRIENDLY = {
         "total_recent_visits": "Frequent visits (last 90 days)",
         "severity_score": "Overall severity of conditions",
@@ -143,7 +139,6 @@ def build_shap_story(shap_values, features, row, horizon_label):
     return f"For {horizon_label}, main drivers are: " + "; ".join(phrases) + "."
 
 def get_predictions(features, beneficiary_id=None, use_model=True):
-    """Predict risks + build explanation and recommendations."""
     if use_model:
         X = pd.DataFrame([features], columns=FEATURES)
         risk30 = float(xgb30.predict(X)[0])
@@ -160,8 +155,7 @@ def get_predictions(features, beneficiary_id=None, use_model=True):
         fig, ax = plt.subplots(figsize=(8, 6))
         shap.plots.bar(shap_values, show=False)
         shap_img_name = f"{beneficiary_id if beneficiary_id else 'new_patient'}_Risk30_shap.png"
-        shap_img_path = os.path.join(FIG_DIR, shap_img_name)
-        plt.savefig(shap_img_path, bbox_inches="tight")
+        plt.savefig(os.path.join(FIG_DIR, shap_img_name), bbox_inches="tight")
         plt.close(fig)
 
     else:
@@ -178,10 +172,9 @@ def get_predictions(features, beneficiary_id=None, use_model=True):
         recommended = TIER_ACTIONS.get(tier, ["Routine care"])
 
         shap_img_name = f"{features['DESYNPUF_ID']}_Risk30_shap.png"
-        shap_img_path = os.path.join(FIG_DIR, shap_img_name)
         fig, ax = plt.subplots(figsize=(8, 6))
         shap.plots.bar(shap_values, show=False)
-        plt.savefig(shap_img_path, bbox_inches="tight")
+        plt.savefig(os.path.join(FIG_DIR, shap_img_name), bbox_inches="tight")
         plt.close(fig)
 
     return {
@@ -202,43 +195,41 @@ def index():
     if request.method == "POST":
         mode = request.form.get("mode")
 
-        if mode == "existing":
-            beneficiary_id = request.form.get("beneficiary_id")
-            row = con.execute(f"SELECT * FROM beneficiary_with_labels WHERE DESYNPUF_ID='{beneficiary_id}'").df()
-            if row.empty:
-                return render_template("index.html", error="Beneficiary ID not found")
-            features = row.iloc[0].to_dict()
-            result = get_predictions(features, beneficiary_id, use_model=False)
+        with duckdb.connect(DB_PATH) as con:
+            if mode == "existing":
+                beneficiary_id = request.form.get("beneficiary_id")
+                row = con.execute(f"SELECT * FROM beneficiary_with_labels WHERE DESYNPUF_ID='{beneficiary_id}'").df()
+                if row.empty:
+                    return render_template("index.html", error="Beneficiary ID not found")
+                features = row.iloc[0].to_dict()
+                result = get_predictions(features, beneficiary_id, use_model=False)
 
-        else:  # new patient
-            uploaded_file = request.files.get("patient_csv")
-            if not uploaded_file:
-                return render_template("index.html", error="Please upload a CSV file with patient data")
-            try:
-                df_new = pd.read_csv(uploaded_file)
-                bene_id = df_new["DESYNPUF_ID"].iloc[0]
+            else:  # new patient
+                uploaded_file = request.files.get("patient_csv")
+                if not uploaded_file:
+                    return render_template("index.html", error="Please upload a CSV file with patient data")
+                try:
+                    df_new = pd.read_csv(uploaded_file)
+                    bene_id = df_new["DESYNPUF_ID"].iloc[0]
 
-                # ✅ Check if already exists in recency table
-                check = con.execute(f"SELECT * FROM beneficiary_with_recency WHERE DESYNPUF_ID='{bene_id}'").df()
-                if not check.empty:
-                    return render_template("index.html", error=f"User {bene_id} is already available")
+                    # ✅ If ID already exists in labels → skip re-insert
+                    check = con.execute(f"SELECT * FROM beneficiary_with_labels WHERE DESYNPUF_ID='{bene_id}'").df()
+                    if not check.empty:
+                        return render_template("index.html", error=f"User {bene_id} already exists in database")
 
-                # Insert new patient into beneficiary_with_recency
-                con.register("df_new", df_new)
-                con.execute("INSERT INTO beneficiary_with_recency SELECT * FROM df_new")
+                    # Engineer features + predict
+                    df_new = engineer_features(df_new)
+                    new_row = df_new.iloc[0].to_dict()
+                    features = {col: new_row.get(col, 0) for col in FEATURES}
+                    result = get_predictions(features, beneficiary_id=None, use_model=True)
 
-                df_new = engineer_features(df_new)
-                new_row = df_new.iloc[0].to_dict()
-                features = {col: new_row.get(col, 0) for col in FEATURES}
-                result = get_predictions(features, beneficiary_id=None, use_model=True)
+                    # ✅ Insert only engineered + predicted row into labels
+                    out_df = pd.DataFrame([{**new_row, **result, "DESYNPUF_ID": bene_id}])
+                    con.register("out_df", out_df)
+                    con.execute("INSERT INTO beneficiary_with_labels SELECT * FROM out_df")
 
-                # Store prediction + features in beneficiary_with_labels
-                out_df = pd.DataFrame([{**new_row, **result, "DESYNPUF_ID": bene_id}])
-                con.register("out_df", out_df)
-                con.execute("INSERT INTO beneficiary_with_labels SELECT * FROM out_df")
-
-            except Exception as e:
-                return render_template("index.html", error=f"Error processing file: {str(e)}")
+                except Exception as e:
+                    return render_template("index.html", error=f"Error processing file: {str(e)}")
 
         return render_template("result.html", result=result)
 
